@@ -1,26 +1,52 @@
-const Conversation = () => {
-	return (
-		<>
-			<div className='flex gap-2 items-center hover:bg-sky-500 rounded p-2 py-1 cursor-pointer'>
-				<div className='avatar online'>
-					<div className='w-12 rounded-full'>
-						<img
-							src='https://cdn0.iconfinder.com/data/icons/communication-line-10/24/account_profile_user_contact_person_avatar_placeholder-512.png'
-							alt='user avatar'
-						/>
-					</div>
-				</div>
+import { useState } from "react";
+import { useMsgContext } from "../../../context/MsgContext";
+import { useSocketContext } from "../../../context/SocketContext";
 
-				<div className='flex flex-col flex-1'>
-					<div className='flex gap-3 justify-between'>
-						<p className='font-bold text-gray-200'>John Doe</p>
-						<span className='text-xl'>🎃</span>
-					</div>
-				</div>
-			</div>
+const Conversation = ({ data }) => {
+  const users = data;
+  const { receiverId, setreceiverId } = useMsgContext();
+  const [selectedConversation, setSelectedConversation] = useState(null);
+  const { onlineUsers } = useSocketContext();
 
-			<div className='divider my-0 py-0 h-1' />
-		</>
-	);
+  const handleConversation = (conversationId) => {
+    console.log(conversationId);
+    setreceiverId(null);
+    setreceiverId(conversationId);
+    setSelectedConversation(conversationId);
+  };
+
+  return (
+    <div className="flex flex-col gap-1 rounded p-2 py-1">
+      {users.map((user, id) => {
+        const isOnline = onlineUsers.includes(user._id); // ✅ Correctly checking online status
+
+        return (
+          <div
+            key={id}
+            className={`flex gap-5 items-center rounded-md p-2 cursor-pointer ${
+              selectedConversation === user._id ? "bg-sky-500" : ""
+            }`}
+            onClick={() => handleConversation(user?._id)}
+          >
+            {/* User Avatar */}
+            <div className={`avatar ${isOnline ? "online" : "offline"}`}>
+              <div className="w-12 rounded-full">
+                <img src={user.profilePic} alt="user avatar" />
+              </div>
+            </div>
+
+            {/* User Name */}
+            <div className="flex flex-row items-center justify-center">
+              <div className="flex gap-3">
+                <p className="font-bold text-gray-200">{user.fullName}</p>
+                <span className="text-xl">😊</span>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 };
+
 export default Conversation;

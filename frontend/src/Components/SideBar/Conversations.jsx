@@ -1,14 +1,20 @@
- import Conversation from "../SideBar/Conversation"
+import useGetConversation from "../../hooks/useGetConversation.js";
+import Conversation from "../SideBar/Conversation.jsx";
 
 const Conversations = () => {
-	return (
-		<div className='py-2 flex flex-col overflow-auto'>
-			<Conversation />
-			<Conversation />
-			<Conversation />
-			<Conversation />
-		 
-		</div>
-	);
+  const { loading, conversation } = useGetConversation();
+ 
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className="py-2 flex flex-col overflow-auto">
+      <Conversation data={conversation} />
+      
+    </div>
+  );
 };
+
 export default Conversations;
