@@ -26,5 +26,4 @@ export const protectedRoute = async (req, res, next) => {
     });
   }
 };
-
 export default protectedRoute;

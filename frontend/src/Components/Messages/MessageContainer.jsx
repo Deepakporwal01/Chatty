@@ -3,37 +3,67 @@ import MessageInput from "../Messages/MessageInput/";
 import Messages from "../Messages/Messages";
 import { TiMessages } from "react-icons/ti";
 import { useAuthContext } from "../../../context/AuthContext";
+import { FcVideoCall } from "react-icons/fc";
+import { IoCall } from "react-icons/io5";
+import useFetchMessage from "../../hooks/useFetchMessage";
+import { useEffect, useState } from "react";
+import VideoCall from "../VideoCall/VideoCall"; // ✅ Import VideoCall Component
+
 const MessageContainer = () => {
-  const {receiverId} = useMsgContext();
+  const { receiverId } = useMsgContext();
+  const { receiver } = useFetchMessage();
+  const { authUser } = useAuthContext(); // ✅ Get logged-in user (myId)
+  const [isCalling, setIsCalling] = useState(false); // ✅ Controls Video Call UI
 
-const fetchreceiverdata = async()=>{
-  try{
-  const response = await fetch("/api/auth/login");
-  }catch(err){
-    console.log(err);
-  }
-}
+  // ✅ Ensure `authUser` and `receiverId` exist before calling
+  if (!JSON.parse(localStorage.getItem("chat-user")) || !receiverId) return <NoChatSelected />;
 
-  const NoChatSelecte = false;
   return (
-    <div className="md:min-w-[450px] flex flex-col ">
-      { receiverId? (
+    <div className="md:min-w-[600px] min-w-[390px] flex-col flex lg:min-h-screen max-h-screen overflow-x-hidden">
+      {receiverId ? (
         <>
-          <div className="bg-slate-500 p-2 my-7 rounded-sm ">
-            <span className="label-text text-lg">To:</span>{"  "}
-            <span className="text-gray-900 font-bold">John doe</span>
+          {/* ✅ Chat Header with Call Buttons */}
+          <div className="bg-slate-500 p-2 h-[4.5rem] lg:my-1 rounded-md lg:mx-5 flex items-center justify-around sticky top-0 z-10 min-w-full lg:h-[4.5rem]">
+            <span className="label-text text-3xl lg:text-xl font-bold capitalize">
+              {receiver?.fullName}
+            </span>
+
+            <div className="flex gap-8">
+              {/* ✅ Start Video Call */}
+              <button onClick={() => setIsCalling(true)}>
+                <FcVideoCall size={"1.6rem"} color={"black"} />
+              </button>
+
+              {/* ✅ Audio Call Button (Not Implemented Yet) */}
+              <button>
+                <IoCall size={"1.2rem"} />
+              </button>
+            </div>
           </div>
-          <Messages />
-       <MessageInput  />
+
+          {/* ✅ Show Chat UI OR Video Call UI */}
+          {!isCalling ? (
+            <>
+              <Messages />
+              <MessageInput />
+            </>
+          ) : (
+            <VideoCall 
+              myId={JSON.parse(localStorage.getItem("chat-user"))} // ✅ Pass logged-in user ID
+              receiverId={receiverId} // ✅ Pass receiver ID
+              closeCall={() => setIsCalling(false)} // ✅ Close Video Call
+            />
+          )}
         </>
-      ):(
+      ) : (
         <NoChatSelected />
-      ) }
+      )}
     </div>
   );
 };
+
 const NoChatSelected = () => {
-    const { authUser } = useAuthContext();
+  const { authUser } = useAuthContext();
   return (
     <div className="flex items-center justify-center w-full h-full">
       <div className="px-4 text-center sm:text-lg md:text-xl text-gray-200 font-semibold flex flex-col items-center gap-2">
@@ -44,4 +74,5 @@ const NoChatSelected = () => {
     </div>
   );
 };
+
 export default MessageContainer;

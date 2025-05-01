@@ -15,12 +15,12 @@ if(authUser){
     const socket = io("http://localhost:4000",{
         query:{
             userId :authUser?._id,
+            transports: ["websocket"],
         }
     });
     setSocket(socket);
     //socket.on is used to listen to the events can be used both on cleint and server side
     socket.on("getOnlineUsers",(users)=>{
-   
         setOnlineUsers(users);
     })
     return ()=>socket.close();
@@ -30,7 +30,6 @@ if(authUser){
         setSocket(null);
     }
 }
-
     },[authUser]);
     return(
         <socketContext.Provider value={{socket,onlineUsers}}>{children}</socketContext.Provider>

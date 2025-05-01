@@ -10,39 +10,39 @@ const Login = () => {
     const { name, value } = e.target;
     setInput((prevInput) => ({
       ...prevInput,
-      [name]: value,  
+      [name]: value,
     }));
   };
- 
+
   const { login, loading } = useLogin();
   // Form submission
-  const submitHandler = async(e) => {
+  const submitHandler = async (e) => {
     e.preventDefault();
-   await login(input);
+    await login(input);
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-w-[24rem] mx-auto">
-      <div className="w-full p-6 rounded-lg shadow-md bg-gray-400 bg-clip-padding backdrop-filter backdrop-blur-lg bg-opacity-0">
+    <div className="flex flex-col    items-center justify-center min-w-[24rem] mx-auto min-h-[90vh] lg:min-h-screen overflow-y-hidden">
+      <div className="w-full p-6 flex flex-col gap-5 rounded-lg shadow-md bg-gray-400 bg-clip-padding backdrop-filter backdrop-blur-lg bg-opacity-0">
         <h1 className="text-3xl font-semibold text-center text-gray-300">
           Login
         </h1>
-        <form className="mt-6" onSubmit={submitHandler}>
+        <form className="mt-6 flex flex-col gap-5" onSubmit={submitHandler}>
           <div>
-            <label className="block text-sm text-gray-300">username</label>
+            <label className="block text-xl text-gray-300">username</label>
             <input
               type="text"
-              className="w-full px-4 py-2 mt-2 text-black bg-white border rounded-md focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
+              className="w-full px-4 lg:h-10 h-14 py-2 mt-2 text-black bg-white border rounded-md focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
               placeholder="Enter Your username Name "
               onChange={handleChange}
               name="username"
             />
           </div>
           <div className="mt-4">
-            <label className="block text-sm text-gray-300">Password</label>
+            <label className="block text-xl text-gray-300">Password</label>
             <input
               type="password"
-              className="w-full px-4 py-2 mt-2 text-black bg-white border rounded-md focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
+              className="w-full lg:h-10 h-14 px-4 py-2 mt-2 text-black bg-white border rounded-md focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
               placeholder="Enter Your Password"
               onChange={handleChange}
               name="password"
@@ -56,7 +56,7 @@ const Login = () => {
         </form>
         <NavLink
           to={"/signup"}
-          className="mt-8 text-xs font-light text-center text-gray-300 "
+          className="mt-8 text-sm font-light text-center text-gray-300 "
         >
           Don't have an account?{" "}
         </NavLink>

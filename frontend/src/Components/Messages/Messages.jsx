@@ -3,7 +3,7 @@ import Message from '../Messages/Message'
 
 export default function Messages() {
   return (
-    <div className='px-4 flex-1 overflow-auto'> 
+    <div className='lg:px-4 flex-1  overflow-y-scroll'> 
       <Message/>
     
     </div>

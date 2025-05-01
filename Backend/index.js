@@ -17,7 +17,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api",userRoute);
 app.use("/api/message",messageRoute);
 ConnectDB().then(
-  server.listen(port, () => {
+  server.listen(port,() => {
     console.log(`App is listening at port ${port}`);
   })
 );

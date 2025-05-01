@@ -3,12 +3,17 @@ import { useState } from "react";
 const SearchInput = () => {
 	const [input ,setInput] = useState('');
 	const handleSearch = (e) => {
+		setInput(e.target.value);
+	}
+	const submitSearch = (e)=>{
 		e.preventDefault();
+		console.log("searched for ",input);
+		setInput('');
 	}
 	return (
-		<form className='flex items-center gap-2'>
-			<input type='text' placeholder='Search…' className='input input-bordered rounded-full' />
-			<button type='submit' className='btn btn-circle bg-sky-500 text-white'>
+		<form className='flex items-center justify-center gap-2 mt-2'>
+			<input type='text' onChange={handleSearch} placeholder='Search…' className='input input-bordered rounded-full w-[80%] text-center' value={input} />
+			<button onClick={submitSearch} type='submit' className='btn btn-circle bg-sky-500 text-white' >
 				<IoSearchSharp className='w-6 h-6 outline-none' />
 			</button>
 		</form>

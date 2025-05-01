@@ -16,6 +16,11 @@ const MessageModel = new mongoose.Schema(
       type: String,
       required: true,
     },
+    senderType: {  
+      type: String,
+      enum: ['user', 'ai'],
+      default: 'user',  
+    },
   },
   { timestamps: true }
 );

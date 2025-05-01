@@ -9,7 +9,8 @@ const useGetConversation = () => {
     const fetchConversations = async () => {
       try {
         const response = await axios.get("/api/users");
-        setConversation(response.data);
+        console.log("Conversations fetched:", response.data);
+        setConversation(response?.data);
       } catch (error) {
         console.error("Error fetching conversations:", error);
       } finally {

@@ -3,7 +3,6 @@ export const MsgContext = createContext();
 export const useMsgContext = ()=>{
     return useContext(MsgContext);
 }
-
 export const MsgContextProvider =({children})=>{
 const [receiverId,setreceiverId] = useState(null);
 return (
