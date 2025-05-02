@@ -1,135 +1,154 @@
 import React, { useEffect, useRef, useState } from "react";
-import io from "socket.io-client";
-import Peer from "simple-peer";
+import { useSocketContext } from "../../../context/SocketContext.jsx";
+import ReactPlayer from "react-player";
 
-// ✅ Replace with your backend URL
-const socket = io("http://localhost:4000");
+const VideoCall = ({ currentUserId, receiverId }) => {
+  const { socket } = useSocketContext();
 
-const VideoCall = ({ myId, receiverId, closeCall }) => {
-  const [stream, setStream] = useState(null);
-  const [callAccepted, setCallAccepted] = useState(false);
-  const [incomingCall, setIncomingCall] = useState(false);
-  const [caller, setCaller] = useState(null);
-  const [callerSignal, setCallerSignal] = useState(null);
-  const [peerConnection, setPeerConnection] = useState(null);
+  const [isCalling, setIsCalling] = useState(false);
+  const [localStream, setLocalStream] = useState(null);
+  const [remoteStream, setRemoteStream] = useState(null);
 
-  const myVideo = useRef();
-  const userVideo = useRef();
+  const peerConnectionRef = useRef(null);
+  const localStreamRef = useRef(null);
 
   useEffect(() => {
-    // ✅ Get Camera & Mic Access
+    // Get user media on mount
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-      .then((currentStream) => {
-        setStream(currentStream);
-        if (myVideo.current) myVideo.current.srcObject = currentStream;
+      .then((stream) => {
+        localStreamRef.current = stream;
+        setLocalStream(stream);
+      });
 
-        // ✅ If User is the Caller, Initiate Call
-        if (receiverId) {
-          console.log("📞 Initiating Call to:", receiverId);
-          startCall(receiverId, currentStream);
+    return () => {
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    // Incoming call
+    socket.on("incomingCall", async ({ from, signal }) => {
+      await setupPeer(false);
+      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(signal));
+
+      const answer = await peerConnectionRef.current.createAnswer();
+      await peerConnectionRef.current.setLocalDescription(answer);
+
+      socket.emit("acceptCall", { to: from, signal: answer });
+    });
+
+    socket.on("callAccepted", async (answer) => {
+      await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on("iceCandidate", async (candidate) => {
+      if (peerConnectionRef.current) {
+        try {
+          await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+          console.error("Error adding received ice candidate", err);
         }
-      })
-      .catch((err) => console.error("🚨 Error accessing media devices:", err));
-
-    // ✅ Listen for Incoming Calls
-    socket.on("incomingCall", ({ from, signal }) => {
-      console.log("📞 Incoming Call from:", from);
-      setIncomingCall(true);
-      setCaller(from);
-      setCallerSignal(signal);
+      }
     });
 
     socket.on("callEnded", () => {
-      console.log("🔴 Call Ended by Other User");
       endCall();
     });
 
     return () => {
       socket.off("incomingCall");
+      socket.off("callAccepted");
+      socket.off("iceCandidate");
       socket.off("callEnded");
     };
-  }, []);
+  }, [socket]);
 
-  // ✅ Start a Call as Caller
-  const startCall = (receiverId, stream) => {
-    const peer = new Peer({ initiator: true, trickle: false, stream });
-
-    peer.on("signal", (signal) => {
-      console.log("📡 Sending Call Offer to:", receiverId);
-      socket.emit("callUser", { from: myId, to: receiverId, signal });
+  const setupPeer = async (isCaller) => {
+    peerConnectionRef.current = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
     });
 
-    peer.on("stream", (userStream) => {
-      if (userVideo.current) userVideo.current.srcObject = userStream;
+    peerConnectionRef.current.onicecandidate = (event) => {
+      if (event.candidate) {
+        socket.emit("iceCandidate", { to: receiverId, candidate: event.candidate });
+      }
+    };
+
+    peerConnectionRef.current.ontrack = (event) => {
+      setRemoteStream(event.streams[0]);
+    };
+
+    localStreamRef.current.getTracks().forEach((track) => {
+      peerConnectionRef.current.addTrack(track, localStreamRef.current);
     });
 
-    setPeerConnection(peer);
+    if (isCaller) {
+      const offer = await peerConnectionRef.current.createOffer();
+      await peerConnectionRef.current.setLocalDescription(offer);
+      socket.emit("callUser", {
+        from: currentUserId,
+        to: receiverId,
+        signal: offer,
+      });
+    }
   };
 
-  // ✅ Accept the Incoming Call
-  const acceptCall = () => {
-    setCallAccepted(true);
-    setIncomingCall(false);
-
-    const peer = new Peer({ initiator: false, trickle: false, stream });
-
-    peer.on("signal", (signal) => {
-      console.log("✅ Accepting Call from:", caller);
-      socket.emit("acceptCall", { to: caller, signal });
-    });
-
-    peer.on("stream", (userStream) => {
-      if (userVideo.current) userVideo.current.srcObject = userStream;
-    });
-
-    peer.signal(callerSignal);
-    setPeerConnection(peer);
+  const callUser = async () => {
+    setIsCalling(true);
+    await setupPeer(true);
   };
 
-  // ❌ Reject the Incoming Call
-  const rejectCall = () => {
-    console.log("❌ Call Rejected");
-    setIncomingCall(false);
-    setCaller(null);
-  };
-
-  // 🔴 End the Call
   const endCall = () => {
-    if (peerConnection) peerConnection.destroy();
-    socket.emit("endCall", { to: receiverId || caller });
-    closeCall(); // Close UI
+    if (peerConnectionRef.current) {
+      peerConnectionRef.current.close();
+      peerConnectionRef.current = null;
+    }
+
+    socket.emit("endCall", { to: receiverId });
+    setIsCalling(false);
+    setRemoteStream(null); // Clear remote stream
   };
 
   return (
-    <div className="flex flex-col items-center bg-gray-900 text-white p-4 rounded-lg">
-      <h2 className="text-lg font-semibold">Video Call</h2>
-
-      {/* 📞 Incoming Call UI */}
-      {incomingCall && (
-        <div className="absolute top-20 p-4 bg-gray-800 text-white rounded-lg shadow-lg">
-          <p>📞 Incoming Call...</p>
-          <button className="bg-green-500 px-4 py-2 m-2 rounded" onClick={acceptCall}>
-            Accept ✅
-          </button>
-          <button className="bg-red-500 px-4 py-2 m-2 rounded" onClick={rejectCall}>
-            Reject ❌
-          </button>
-        </div>
+    <div className="flex flex-col items-center gap-4">
+      {/* Local video */}
+      {localStream && (
+        <ReactPlayer
+          url={localStream}
+          playing
+          muted
+          controls={false}
+          width="300px"
+          height="200px"
+          pip={false}
+          className="border"
+        />
       )}
 
-      {/* 📷 Video Section */}
-      <div className="flex gap-4 mt-4">
-        {/* My Video */}
-        <video ref={myVideo} playsInline autoPlay className="w-48 h-32 border border-white rounded" />
+      {/* Remote video */}
+      {remoteStream && (
+        <ReactPlayer
+          url={remoteStream}
+          playing
+          controls={false}
+          width="300px"
+          height="200px"
+          pip={false}
+          className="border"
+        />
+      )}
 
-        {/* Other User's Video */}
-        {callAccepted && <video ref={userVideo} playsInline autoPlay className="w-48 h-32 border border-white rounded" />}
-      </div>
-
-      {/* 🔴 End Call Button */}
-      {callAccepted && (
-        <button onClick={endCall} className="mt-4 bg-red-500 text-white px-4 py-2 rounded">
-          End Call 🔴
+      {!isCalling ? (
+        <button onClick={callUser} className="bg-blue-500 text-white px-4 py-2 rounded">
+          Call
+        </button>
+      ) : (
+        <button onClick={endCall} className="bg-red-500 text-white px-4 py-2 rounded">
+          End Call
         </button>
       )}
     </div>

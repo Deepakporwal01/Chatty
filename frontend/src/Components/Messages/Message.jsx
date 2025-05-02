@@ -3,7 +3,6 @@ import useFetchMessage from "../../hooks/useFetchMessage.js";
 import { useMsgContext } from "../../../context/MsgContext.jsx";
 import { useAuthContext } from "../../../context/AuthContext.jsx";
 import { TiMessages } from "react-icons/ti";
-import { FaRobot } from "react-icons/fa"; // Importing robot icon
 import useListenMessages from "../../hooks/useListenMessages.js";
 import robo from "../../assets/robo.webp"
 const Message = React.memo(() => {
@@ -80,8 +79,8 @@ const Message = React.memo(() => {
 const NoChatSelected = () => {
   const { authUser } = useAuthContext();
   return (
-    <div className="flex items-center justify-center w-full h-full">
-      <div className="px-4 text-center sm:text-lg md:text-xl text-gray-200 font-semibold flex flex-col items-center gap-2">
+    <div className="flex items-center justify-center min-w-full min-h-screen">
+      <div className="px-4 text-center sm:text-lg md:text-xl text-gray-200 font-semibold flex flex-col items-center gap-2 justify-center w-full  h-full">
         <p>Welcome 👋 {authUser.fullName} ❄</p>
         <p>Select a chat to start messaging</p>
         <TiMessages className="text-3xl md:text-6xl text-center" />
