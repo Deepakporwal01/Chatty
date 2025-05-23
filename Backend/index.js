@@ -5,6 +5,7 @@ import userRoute from "./Routes/user.routes.js";
 import cors from "cors";
 import { ConnectDB } from "./Db/db.js";
 import messageRoute from "./Routes/message.routes.js";
+import groupRoute from "./Routes/group.routes.js";
 import cookieParser from "cookie-parser";
 import {app,server} from "../Backend/socket/socket.js"
 dotenv.config(); 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);         
 app.use("/api",userRoute);
 app.use("/api/message",messageRoute);
+app.use("/api/groups",groupRoute)
 ConnectDB().then(
   server.listen(port,() => {
     console.log(`App is listening at port ${port}`);
