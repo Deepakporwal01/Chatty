@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import CreateGroup from "../../utility/CreateGroup";
 import axios from "axios";
 
-import MessageContainer from "../messages/MessageContainer"; // Adjust if needed
+import MessageContainer from "../Messages/MessageContainer"
 import JoinGroup from "../../utility/JoinGroup";
 export const Conversation = ({
   data,
